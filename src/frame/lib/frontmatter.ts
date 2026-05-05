@@ -42,7 +42,6 @@ interface Schema {
 const layoutNames = [
   'default',
   'graphql-explorer',
-  'product-landing',
   'release-notes',
   'inline',
   'category-landing',
@@ -174,7 +173,8 @@ export const schema: Schema = {
         },
       },
     },
-    // Shown in `product-landing.html` "What's new" section
+    // DEPRECATED: tied to the removed product-landing layout. Schema entry kept
+    // because translations still carry `changelog:` until they catch up.
     changelog: {
       type: 'object',
       properties: {
@@ -245,7 +245,8 @@ export const schema: Schema = {
       },
       description: 'Array of journey tracks for journey landing pages',
     },
-    // Used in `product-landing.html`
+    // DEPRECATED: tied to the removed product-landing layout. Schema entry kept
+    // because translations still carry `beta_product:` until they catch up.
     beta_product: {
       type: 'boolean',
     },
