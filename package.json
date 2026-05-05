@@ -354,7 +354,9 @@
     "esbuild": "^0.25",
     "vite": "^7.3.2",
     "path-to-regexp": "^8.4.0",
-    "apache-arrow": "file:src/search/vendor/apache-arrow-stub"
+    "apache-arrow": "file:src/search/vendor/apache-arrow-stub",
+    "uuid": "^14.0.0",
+    "postcss": "^8.5.10"
   },
   "optionalDependencies": {
     "esm": "^3.2.25"
