@@ -16,6 +16,7 @@ children:
   - /fleet
   - /research
   - /chronicle
+  - /rubber-duck
   - /lsp-servers
   - /context-management
 contentType: concepts
