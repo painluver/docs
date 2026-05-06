@@ -32,6 +32,9 @@ These limits are subject to change.
 | Workflow execution limit | Re-run | 50 re-runs | A workflow run can be re-run a maximum of 50 times. This limit includes both full re-runs and re-runs of a subset of jobs. | {% octicon "check" aria-label="Yes" %} Support ticket |
 | Workflows queuing | Workflow trigger event rate limit | 1500 events / 10 seconds / repository | Each repository is limited to events triggering a workflow run. | {% octicon "check" aria-label="Yes" %} Support ticket |
 | Workflows queuing | Workflow run queued | 500 workflow runs / 10 seconds | When the limit is reached, the workflow runs that were supposed to be triggered by the webhook events will be blocked and will not be queued. Reusable workflows are viewed as a single entity. For example, a run with 30 reusable workflows counts as 1 in this instance. | {% octicon "x" aria-label="No" %} |
+| {% ifversion actions-nga %} |
+| Workflows queuing | Concurrency group queue | 100 workflow runs / concurrency group | When using `queue: max` in the `concurrency` section, up to 100 jobs or workflow runs can be queued per concurrency group. Runs beyond this limit will be rejected. | {% octicon "x" aria-label="No" %} |
+| {% endif %} |
 | Self-hosted | Runner registrations | 1500 runners / 5 minutes / repository/org/enterprise | Runners can be registered per repository/organization/enterprise. | {% octicon "check" aria-label="Yes" %} Support ticket |
 | Self-hosted | Runners per runner group | 10,000 runners | Runners registered at the same time per runner group. | {% octicon "x" aria-label="No" %} |
 | Self-hosted | Job execution time | 5 days | Each job in a workflow can run for up to 5 days of execution time. If a job reaches this limit, the job is terminated and fails. | {% octicon "x" aria-label="No" %} |
