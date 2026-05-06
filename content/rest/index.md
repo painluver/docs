@@ -49,6 +49,7 @@ children:
   - /guides
   - /actions
   - /activity
+  - /agent-tasks
   - /announcement-banners
   - /apps
   - /billing
