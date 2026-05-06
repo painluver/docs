@@ -28,7 +28,7 @@ children:
   - /content/copilot/concepts/agents/copilot-cli/about-cli-plugins
   - /content/copilot/concepts/agents/copilot-cli/about-copilot-cli
   - /content/copilot/concepts/agents/copilot-cli/about-custom-agents
-  - /content/copilot/concepts/agents/copilot-cli/about-remote-access
+  - /content/copilot/concepts/agents/copilot-cli/about-remote-control
   - /content/copilot/concepts/agents/copilot-cli/autopilot
   - /content/copilot/concepts/agents/copilot-cli/cancel-and-roll-back
   - /content/copilot/concepts/agents/copilot-cli/chronicle
