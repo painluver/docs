@@ -67,6 +67,17 @@ export function correctTranslatedContentStrings(
   content = content.replace(/^([ \t]*)\* ?\n[ \t]+/gm, '$1* ')
   content = content.replace(/^\|[ \t]*\n[ \t]+/gm, '| ')
 
+  // The same translator wrapping habit also strands heading markers
+  // (`#`/`##`/...), blockquote markers (`>`), and the opening `**` of a
+  // bold span on their own line, with the actual content pushed to the
+  // next line as deeply indented text. This breaks heading/blockquote/
+  // bold rendering and leaves Liquid tags and `[AUTOTITLE]` links
+  // unexpanded. Rejoin them. Fence- and frontmatter-aware so we don't
+  // disturb fenced markdown examples or YAML frontmatter.
+  // ~3k headings, ~1.6k blockquotes, ~3.5k bold-after-marker cases
+  // measured across all eight translated languages.
+  content = joinDanglingMarkers(content)
+
   // --- Per-language fixes (es, ja, pt, zh, ru, fr, ko, de) ---
 
   if (context.code === 'es') {
@@ -2041,4 +2052,114 @@ export function correctTranslatedContentStrings(
   }
 
   return content
+}
+
+/**
+ * Rejoin marker lines that the translation pipeline split from their content.
+ *
+ * Translators sometimes leave a heading marker (`#`/`##`/...), blockquote
+ * marker (`>`), or the opening `**` of a bold span (immediately following a
+ * list/heading/blockquote/table marker) on its own line, with the rest of
+ * the content pushed to the next line as deeply indented text. This breaks
+ * rendering (empty headings, broken blockquotes, unrendered bold, unexpanded
+ * Liquid and `[AUTOTITLE]` links).
+ *
+ * Conservative thresholds:
+ * - Marker line has 0–3 leading spaces (CommonMark heading/blockquote rule).
+ * - Continuation line has 6+ leading spaces (avoids 4-space indented code).
+ * - Marker line contains *only* the marker (and optional trailing whitespace).
+ * - Skip fenced code blocks (``` and ~~~) and YAML frontmatter (`---`...`---`).
+ */
+function joinDanglingMarkers(content: string): string {
+  const lines = content.split('\n')
+  const out: string[] = []
+  let inFence = false
+  let fenceChar = ''
+  let fenceLen = 0
+  let inFrontmatter = lines[0] === '---'
+
+  // Marker-only line patterns (run only against non-fenced, non-frontmatter lines).
+  const headingOnly = /^([ \t]{0,3})(#{1,6})[ \t]*$/
+  const blockquoteOnly = /^([ \t]{0,3}>)[ \t]*$/
+  // Bold-open after a list/heading/blockquote/table marker (no other content).
+  const markerThenBoldOnly =
+    /^([ \t]{0,3}(?:[*+-]|\d+\.)[ \t]+|[ \t]{0,3}>[ \t]+|[ \t]{0,3}#{1,6}[ \t]+|\|[ \t]*)\*\*[ \t]*$/
+  // Continuation: 6+ leading spaces and at least one non-whitespace character.
+  const deepIndented = /^[ \t]{6,}(\S.*)$/
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // YAML frontmatter close: `---` or `...` after the opening `---`.
+    if (inFrontmatter && i > 0 && (line === '---' || line === '...')) {
+      inFrontmatter = false
+      out.push(line)
+      continue
+    }
+
+    // While inside frontmatter, pass lines through verbatim. Crucially,
+    // do NOT run fence detection here — a frontmatter line starting with
+    // ``` or ~~~ (e.g. inside a multiline scalar) would otherwise toggle
+    // `inFence` and cause the rest of the document after frontmatter
+    // closes to be (mis-)treated as inside a fence.
+    if (inFrontmatter) {
+      out.push(line)
+      continue
+    }
+
+    // CommonMark fenced code block: 0–3 leading spaces, then 3+ ` or ~.
+    const fenceMatch = line.match(/^[ \t]{0,3}(`{3,}|~{3,})/)
+    if (fenceMatch) {
+      const marker = fenceMatch[1]
+      if (!inFence) {
+        inFence = true
+        fenceChar = marker[0]
+        fenceLen = marker.length
+      } else if (marker[0] === fenceChar && marker.length >= fenceLen) {
+        inFence = false
+        fenceChar = ''
+        fenceLen = 0
+      }
+      out.push(line)
+      continue
+    }
+
+    if (inFence) {
+      out.push(line)
+      continue
+    }
+
+    const next = i + 1 < lines.length ? lines[i + 1] : undefined
+    const nextDeep = next !== undefined ? next.match(deepIndented) : null
+    if (!nextDeep) {
+      out.push(line)
+      continue
+    }
+    const nextContent = nextDeep[1]
+
+    const heading = line.match(headingOnly)
+    if (heading) {
+      out.push(`${heading[1]}${heading[2]} ${nextContent}`)
+      i++
+      continue
+    }
+
+    const bq = line.match(blockquoteOnly)
+    if (bq) {
+      out.push(`${bq[1]} ${nextContent}`)
+      i++
+      continue
+    }
+
+    const boldOpen = line.match(markerThenBoldOnly)
+    if (boldOpen) {
+      out.push(`${boldOpen[1]}**${nextContent}`)
+      i++
+      continue
+    }
+
+    out.push(line)
+  }
+
+  return out.join('\n')
 }

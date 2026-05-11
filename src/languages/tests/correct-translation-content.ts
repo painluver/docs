@@ -1597,6 +1597,132 @@ describe('correctTranslatedContentStrings', () => {
       // Valid table rows are not modified
       expect(fix('| a | b |\n| c | d |', 'es')).toBe('| a | b |\n| c | d |')
     })
+
+    test('rejoins dangling heading markers (all languages)', () => {
+      const broken = '### \n              {% data variables.product.github %} の使用'
+      const expected = '### {% data variables.product.github %} の使用'
+      for (const lang of ['ja', 'de', 'es', 'fr', 'ko', 'pt', 'ru', 'zh']) {
+        expect(fix(broken, lang)).toBe(expected)
+      }
+      // All heading levels
+      expect(fix('# \n              Title', 'ja')).toBe('# Title')
+      expect(fix('###### \n              Title', 'ja')).toBe('###### Title')
+      // 0–3 leading spaces are accepted
+      expect(fix('   ### \n              Title', 'ja')).toBe('   ### Title')
+      // Valid headings are not modified
+      expect(fix('### Already correct', 'ja')).toBe('### Already correct')
+      // 4-space indented heading-like text is not collapsed (looks like code)
+      expect(fix('    ###\n              code', 'ja')).toBe('    ###\n              code')
+      // Shallow next-line indent (<6) is not collapsed
+      expect(fix('### \n  Title', 'ja')).toBe('### \n  Title')
+    })
+
+    test('rejoins dangling blockquote markers (all languages)', () => {
+      const broken = '> \n              {% data variables.product.github %} は preview 中です。'
+      const expected = '> {% data variables.product.github %} は preview 中です。'
+      for (const lang of ['ja', 'de', 'es', 'fr', 'ko', 'pt', 'ru', 'zh']) {
+        expect(fix(broken, lang)).toBe(expected)
+      }
+      // 0–3 leading spaces are accepted
+      expect(fix('  > \n              Quote', 'ja')).toBe('  > Quote')
+      // Valid blockquotes are not modified
+      expect(fix('> Already correct', 'ja')).toBe('> Already correct')
+      expect(fix('>\n> Continued blockquote', 'ja')).toBe('>\n> Continued blockquote')
+    })
+
+    test('rejoins dangling bold-open after a marker (all languages)', () => {
+      const broken =
+        '* **\n              {% data variables.product.prodname_copilot_short %}へのアクセス**。 More text'
+      const expected =
+        '* **{% data variables.product.prodname_copilot_short %}へのアクセス**。 More text'
+      for (const lang of ['ja', 'de', 'es', 'fr', 'ko', 'pt', 'ru', 'zh']) {
+        expect(fix(broken, lang)).toBe(expected)
+      }
+      // Numbered list marker
+      expect(fix('1. **\n              Important**: text', 'ja')).toBe('1. **Important**: text')
+      // Heading marker
+      expect(fix('### **\n              Bold heading**', 'ja')).toBe('### **Bold heading**')
+      // Blockquote marker
+      expect(fix('> **\n              Quoted bold**', 'ja')).toBe('> **Quoted bold**')
+      // Table cell
+      expect(fix('| **\n              Cell bold** | x', 'ja')).toBe('| **Cell bold** | x')
+      // Bare `**` (no preceding marker) is not collapsed — could be a closing
+      // bold marker followed by legitimate indented continuation.
+      expect(fix('**\n              text', 'ja')).toBe('**\n              text')
+    })
+
+    test('does not modify content inside fenced code blocks', () => {
+      // Markdown example inside ```md fence should be preserved verbatim
+      const fenced = '```md\n### \n              Heading example\n```'
+      expect(fix(fenced, 'ja')).toBe(fenced)
+      // Tilde fences are also respected
+      const tilde = '~~~md\n> \n              Quote example\n~~~'
+      expect(fix(tilde, 'ja')).toBe(tilde)
+      // Bold-open inside code fence
+      const boldFenced = '```md\n* **\n              bold example**\n```'
+      expect(fix(boldFenced, 'ja')).toBe(boldFenced)
+    })
+
+    test('does not modify YAML frontmatter', () => {
+      // Multiline YAML scalars and indented values must not be joined
+      const fm = `---
+title: Example
+intro: >
+              Multiline
+              continued
+versions:
+  fpt: '*'
+---
+
+### 
+              Real heading after frontmatter`
+      const expected = `---
+title: Example
+intro: >
+              Multiline
+              continued
+versions:
+  fpt: '*'
+---
+
+### Real heading after frontmatter`
+      expect(fix(fm, 'ja')).toBe(expected)
+    })
+
+    test('frontmatter containing fence-like characters does not break body fence tracking', () => {
+      // A multiline scalar in frontmatter that includes ``` (or ~~~) must
+      // NOT toggle the body's fence-tracking state. After frontmatter
+      // closes, dangling markers in the body should still be rejoined.
+      const fm = `---
+title: Example
+intro: |
+  \`\`\`
+  fence-like text inside frontmatter
+  \`\`\`
+---
+
+### 
+              Real heading after frontmatter`
+      const expected = `---
+title: Example
+intro: |
+  \`\`\`
+  fence-like text inside frontmatter
+  \`\`\`
+---
+
+### Real heading after frontmatter`
+      expect(fix(fm, 'ja')).toBe(expected)
+    })
+
+    test('does not collapse nested-list indented code blocks', () => {
+      // A list item followed by blank line + 6-space-indented "code" should
+      // be left alone because the marker line itself is empty (not a
+      // bare `>`/`#`/`* **` form), and the previous content line is not
+      // a heading/blockquote/bold-open marker.
+      const nested = '1. Run this command:\n\n      gh auth login'
+      expect(fix(nested, 'ja')).toBe(nested)
+    })
   })
 
   // ─── EDGE CASES ────────────────────────────────────────────────────
