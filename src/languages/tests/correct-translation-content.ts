@@ -1878,4 +1878,27 @@ Para más información, consulta "[AUTOTITLE](/path)".
       expect(out).toBe(text)
     })
   })
+
+  // ─── SCRAPE-6572: search-scrape failures ─────────────────────────────
+  // Tests for the per-file Liquid corrections added to stop the daily
+  // search-scrape failures reported in github/docs-engineering#6572.
+  describe('SCRAPE-6572 per-file fixes', () => {
+    test('ko: configuring-access-to-private-registries-for-dependabot intro missing endif', () => {
+      const broken =
+        '자체 호스팅된 실행기에서 실행 중인 {% data variables.product.prodname_dependabot %}에 대한 액세스를 구성할 수도 있습니다.{% data variables.product.prodname_dependabot %}'
+      const out = fix(broken, 'ko')
+      expect(out).toContain('{% endif %}')
+      expect(out).not.toMatch(
+        /구성할 수도 있습니다\.\{% data variables\.product\.prodname_dependabot %\}$/,
+      )
+    })
+
+    test('ru: viewing-a-projects-contributors intro swapped endif/ifversion', () => {
+      const broken =
+        'Вы можете увидеть, кто внес{% endif %} коммиты в репозиторий{% ifversion fpt or ghec %} и его зависимости.'
+      const out = fix(broken, 'ru')
+      expect(out).not.toContain('внес{% endif %}')
+      expect(out).toMatch(/\{% ifversion fpt or ghec %\} и его зависимости\{% endif %\}\.$/)
+    })
+  })
 })

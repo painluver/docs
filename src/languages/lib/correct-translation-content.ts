@@ -1027,6 +1027,17 @@ export function correctTranslatedContentStrings(
       '{% ifversion ghes %}Владелец предприятия может{%else %}{% data variables.product.company_short %} перенести образы Docker, ранее хранящиеся в реестре Docker на {% data variables.product.github %} на {% data variables.product.prodname_container_registry %}.',
       '{% ifversion ghes %}Владелец предприятия может{% else %}{% data variables.product.company_short %} может{% endif %} перенести образы Docker, ранее хранящиеся в реестре Docker на {% data variables.product.github %} на {% data variables.product.prodname_container_registry %}.',
     )
+
+    // [SCRAPE-6572] Per-file fix:
+    // repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors.md
+    // (intro): translator swapped `{% endif %}` and `{% ifversion fpt or ghec %}`,
+    // leaving an orphan `endif` at the start of the intro and the `ifversion`
+    // unclosed. This broke the `/ru/repositories` landing page scrape since
+    // this page is one of its children. Restore correct ordering.
+    content = content.replaceAll(
+      'Вы можете увидеть, кто внес{% endif %} коммиты в репозиторий{% ifversion fpt or ghec %} и его зависимости.',
+      'Вы можете увидеть, кто внес коммиты в репозиторий{% ifversion fpt or ghec %} и его зависимости{% endif %}.',
+    )
   }
 
   if (context.code === 'fr') {
@@ -1319,6 +1330,18 @@ export function correctTranslatedContentStrings(
     content = content.replaceAll(
       '인스턴스에서 기본 제공 인증{% endif %}를 사용하는 경우 {% data variables.product.github %} 계정 {% ifversion ghes %}의 사용자 이름을 변경할 수 있습니다.',
       '{% data variables.product.github %} 계정의 사용자 이름을 변경할 수 있습니다.{% ifversion ghes %} 인스턴스에서 기본 제공 인증을 사용하는 경우.{% endif %}',
+    )
+
+    // [SCRAPE-6572] Per-file fix:
+    // code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/configuring-access-to-private-registries-for-dependabot.md
+    // (intro): translator dropped the closing `{% endif %}` and replaced it
+    // with a duplicate `{% data variables.product.prodname_dependabot %}`
+    // reference. This left `{% ifversion dependabot-on-actions-self-hosted %}`
+    // unclosed and broke the `/ko/code-security` landing page scrape since
+    // this page is one of its children. Restore the `{% endif %}`.
+    content = content.replaceAll(
+      '자체 호스팅된 실행기에서 실행 중인 {% data variables.product.prodname_dependabot %}에 대한 액세스를 구성할 수도 있습니다.{% data variables.product.prodname_dependabot %}',
+      '자체 호스팅된 실행기에서 실행 중인 {% data variables.product.prodname_dependabot %}에 대한 액세스를 구성할 수도 있습니다.{% endif %}',
     )
   }
 
