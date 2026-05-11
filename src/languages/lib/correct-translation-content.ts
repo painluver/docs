@@ -809,6 +809,17 @@ export function correctTranslatedContentStrings(
     // `{% заголовки строк %}` — "row headers" = rowheaders (opener; `{% endrowheaders %}` stays in English)
     content = content.replaceAll('{% заголовки строк %}', '{% rowheaders %}')
     content = content.replaceAll('{%- заголовки строк %}', '{%- rowheaders %}')
+    // `{% windowsTerminal %}` — "Windows Terminal" platform tag with capital T
+    // (the correct tag name is lowercase `{% windowsterminal %}`)
+    content = content.replaceAll('{% windowsTerminal %}', '{% windowsterminal %}')
+    content = content.replaceAll('{%- windowsTerminal %}', '{%- windowsterminal %}')
+    // `{%- командная палитра ifversion %}` — "command palette ifversion" with word order swapped
+    // Russian "командная палитра" (command palette) was placed before "ifversion" and the
+    // feature-flag arg was dropped. Recover as `{%- ifversion command-palette %}`.
+    content = content.replace(
+      /\{%(-?)\s*командная\s+палитра\s+ifversion\s*(-?)%\}/g,
+      '{%$1 ifversion command-palette $2%}',
+    )
     // `{% конец %}` after `{% raw %}` means `{% endraw %}`, not `{% endif %}`.
     // Handle this BEFORE the generic `{% конец %}` → `{% endif %}` fallback.
     // We use a split-based approach instead of `[^]*?` regex to avoid
@@ -1030,6 +1041,11 @@ export function correctTranslatedContentStrings(
     content = content.replace(/\{%-?\s*référentiel\s*-?%\}/g, '')
     content = content.replace(/\{%-?\s*paramètres\s*-?%\}/g, '')
     content = content.replace(/\{%-?\s*product\s*-?%\}/g, '')
+    // `{% données.variables.X %}` — translator used `.` instead of space after "données"
+    content = content.replace(
+      /\{%(-?)\s*données\.(variables|reusables)\.([A-Za-z0-9._-]+)(\s*-?%\})/g,
+      '{%$1 data $2.$3$4',
+    )
     content = content.replaceAll('{% données variables', '{% data variables')
     content = content.replaceAll('{% données réutilisables.', '{% data reusables.')
     content = content.replaceAll('{% variables de données.', '{% data variables.')
@@ -1174,6 +1190,17 @@ export function correctTranslatedContentStrings(
   }
 
   if (context.code === 'ko') {
+    // `{% datda variables.` — typo of "data" (d-a-t-d-a instead of d-a-t-a)
+    content = content.replaceAll('{% datda variables', '{% data variables')
+    content = content.replaceAll('{%- datda variables', '{%- data variables')
+    // `{% data를 [Korean] variables.X %}` — Korean object-marker "를" (object case particle)
+    // was accidentally appended to "data", and Korean words follow before the path.
+    // e.g. `{% data를 탐색하고 수락하기 variables.copilot.next_edit_suggestions %}`
+    // Strip the Korean text and restore the correct `{% data variables.X %}` tag.
+    content = content.replace(
+      /\{%(-?)\s*data를\s+[가-힣\s]+variables\.([A-Za-z0-9._-]+)\s*(-?)%\}/g,
+      '{%$1 data variables.$2 $3%}',
+    )
     content = content.replaceAll('[AUTOTITLE"을 참조하세요]', '[AUTOTITLE]')
     content = content.replaceAll('{% 데이터 variables', '{% data variables')
     content = content.replaceAll('{% 데이터 reusables.', '{% data reusables.')
@@ -1300,6 +1327,9 @@ export function correctTranslatedContentStrings(
     content = content.replaceAll('{% daten variables', '{% data variables')
     content = content.replaceAll('{% Daten reusables', '{% data reusables')
     content = content.replaceAll('{%- Daten reusables', '{%- data reusables')
+    // `{% Datenseite variables.` — "Datenseite" (data page) compound used instead of "data"
+    content = content.replaceAll('{% Datenseite variables', '{% data variables')
+    content = content.replaceAll('{%- Datenseite variables', '{%- data variables')
     // `wiederverwendbare` is German for "reusables" — fix translated reusables paths
     content = content.replaceAll('{% data wiederverwendbare.', '{% data reusables.')
     content = content.replaceAll('{% Daten wiederverwendbare.', '{% data reusables.')

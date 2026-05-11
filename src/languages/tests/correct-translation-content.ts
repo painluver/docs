@@ -662,6 +662,21 @@ describe('correctTranslatedContentStrings', () => {
       expect(fix('{%- заголовки строк %}', 'ru')).toBe('{%- rowheaders %}')
     })
 
+    test('fixes windowsTerminal → windowsterminal', () => {
+      expect(fix('{% windowsTerminal %}', 'ru')).toBe('{% windowsterminal %}')
+      expect(fix('{%- windowsTerminal %}', 'ru')).toBe('{%- windowsterminal %}')
+    })
+
+    test('fixes командная палитра ifversion → ifversion command-palette', () => {
+      expect(fix('{%- командная палитра ifversion %}', 'ru')).toBe(
+        '{%- ifversion command-palette %}',
+      )
+      expect(fix('{% командная палитра ifversion %}', 'ru')).toBe('{% ifversion command-palette %}')
+      expect(fix('{%- командная палитра ifversion -%}', 'ru')).toBe(
+        '{%- ifversion command-palette -%}',
+      )
+    })
+
     test('fixes translated feature flag names', () => {
       expect(fix('обязательный-2fa-dotcom-участник', 'ru')).toBe(
         'mandatory-2fa-dotcom-contributors',
@@ -765,6 +780,11 @@ describe('correctTranslatedContentStrings', () => {
       expect(fix('{% de data variables.product.github %}', 'fr')).toBe(
         '{% data variables.product.github %}',
       )
+      // `{% données.variables.X %}` — dot instead of space after "données"
+      expect(fix('{% données.variables.copilot.copilot_chat_short %}', 'fr')).toBe(
+        '{% data variables.copilot.copilot_chat_short %}',
+      )
+      expect(fix('{% données.reusables.foo.bar %}', 'fr')).toBe('{% data reusables.foo.bar %}')
     })
 
     test('fixes translated else', () => {
@@ -882,6 +902,24 @@ describe('correctTranslatedContentStrings', () => {
       expect(fix('[AUTOTITLE"을 참조하세요]', 'ko')).toBe('[AUTOTITLE]')
     })
 
+    test('fixes datda → data typo', () => {
+      expect(fix('{% datda variables.product.github %}', 'ko')).toBe(
+        '{% data variables.product.github %}',
+      )
+      expect(fix('{%- datda variables.copilot.foo %}', 'ko')).toBe(
+        '{%- data variables.copilot.foo %}',
+      )
+    })
+
+    test('fixes data를 Korean-particle corruption', () => {
+      expect(
+        fix('{% data를 탐색하고 수락하기 variables.copilot.next_edit_suggestions %}', 'ko'),
+      ).toBe('{% data variables.copilot.next_edit_suggestions %}')
+      expect(
+        fix('{%- data를 탐색하고 수락하기 variables.copilot.next_edit_suggestions -%}', 'ko'),
+      ).toBe('{%- data variables.copilot.next_edit_suggestions -%}')
+    })
+
     test('fixes translated data tags', () => {
       expect(fix('{% 데이터 variables.product.github %}', 'ko')).toBe(
         '{% data variables.product.github %}',
@@ -992,6 +1030,13 @@ describe('correctTranslatedContentStrings', () => {
       )
       expect(fix('{% Daten reusables.foo %}', 'de')).toBe('{% data reusables.foo %}')
       expect(fix('{%- Daten reusables.foo %}', 'de')).toBe('{%- data reusables.foo %}')
+      // `{% Datenseite variables.` — "Datenseite" (data page) compound = data
+      expect(fix('{% Datenseite variables.product.prodname_github_app %}', 'de')).toBe(
+        '{% data variables.product.prodname_github_app %}',
+      )
+      expect(fix('{%- Datenseite variables.product.foo %}', 'de')).toBe(
+        '{%- data variables.product.foo %}',
+      )
     })
 
     test('fixes hyphenated data tags without space', () => {
