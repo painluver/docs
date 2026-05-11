@@ -32,8 +32,7 @@ on:
         DOCS_BOT_PAT: ${{ secrets.DOCS_BOT_PAT_BASE }}
       with:
         script: |
-          // Default octokit uses github.token for in-repo (docs-internal) calls
-          const octokit = github;
+          // octokit (provided by github-script) uses github.token for in-repo (docs-internal) calls
           // Cross-repo octokit uses DOCS_BOT_PAT for docs-content and GraphQL calls
           const crossRepoOctokit = github.getOctokit(process.env.DOCS_BOT_PAT);
 
