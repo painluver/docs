@@ -4,6 +4,7 @@ shortTitle: Administer for enterprise
 intro: 'Control the use of {% data variables.copilot.copilot_cli_short %} within your enterprise.'
 versions:
   feature: copilot
+permissions: Enterprise owners and AI managers
 contentType: how-tos
 allowTitleToDifferFromFilename: true
 category:
@@ -15,7 +16,7 @@ docsTeamMetrics:
 
 ## Enabling or disabling {% data variables.copilot.copilot_cli_short %}
 
-**Enterprise owners** can control the use of {% data variables.copilot.copilot_cli_short %} by configuring a policy.
+You can control the use of {% data variables.copilot.copilot_cli_short %} by configuring a policy.
 
 {% data reusables.enterprise-accounts.access-enterprise %}
 {% data reusables.enterprise-accounts.ai-controls-tab %}
