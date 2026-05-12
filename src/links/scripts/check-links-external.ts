@@ -14,6 +14,7 @@
  *   CREATE_REPORT - Whether to create an issue report (default: false)
  *   REPORT_REPOSITORY - Repository to create report issues in
  *   CACHE_MAX_AGE_DAYS - How long to cache URL check results (default: 7)
+ *   DOMAIN_CONCURRENCY - Number of domains to process concurrently (default: 10)
  */
 
 import { program } from 'commander'
@@ -42,6 +43,7 @@ const CACHE_MAX_AGE_MS = CACHE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000
 // Request configuration
 const REQUEST_TIMEOUT_MS = 30000 // 30 seconds
 const REQUEST_DELAY_MS = 100 // 100ms between requests to avoid rate limiting
+const DEFAULT_DOMAIN_CONCURRENCY = 10 // Process this many domains in parallel
 
 // Create a set for fast lookups of excluded links
 const excludedLinksSet = new Set(excludedLinks.map(({ is }) => is).filter(Boolean))
@@ -241,6 +243,11 @@ async function main() {
     .name('check-links-external')
     .description('External link checker with caching')
     .option('--max <number>', 'Maximum number of URLs to check', parseInt)
+    .option(
+      '--domain-concurrency <number>',
+      'Number of domains to process concurrently',
+      String(DEFAULT_DOMAIN_CONCURRENCY),
+    )
     .option('--verbose', 'Verbose output')
     .option('--dry-run', "Extract links but don't check them")
     .parse()
@@ -308,54 +315,106 @@ async function main() {
 
   const urls = Array.from(allLinks.keys())
   const maxUrls = options.max ? Math.min(options.max, urls.length) : urls.length
+  const domainConcurrency = Math.max(
+    1,
+    parseInt(process.env.DOMAIN_CONCURRENCY || options.domainConcurrency, 10),
+  )
+  let malformedCount = 0
 
-  console.log(`Checking ${maxUrls} URLs (may take a while)...`)
-
+  // Group URLs by hostname so we can check multiple domains in parallel
+  // while keeping requests to any single domain sequential.
+  const urlsByDomain = new Map<string, string[]>()
   for (let i = 0; i < maxUrls; i++) {
     const url = urls[i]
-    const occurrences = allLinks.get(url)!
-
-    const result = await checkUrl(url, db.data)
-    checkedCount++
-
-    if (result.cached) {
-      cachedCount++
-    }
-
-    if (!result.ok) {
+    try {
+      const hostname = new URL(url).hostname
+      if (!urlsByDomain.has(hostname)) urlsByDomain.set(hostname, [])
+      urlsByDomain.get(hostname)!.push(url)
+    } catch {
+      // Record malformed URLs as broken links
+      malformedCount++
+      checkedCount++
+      const occurrences = allLinks.get(url)!
       for (const occ of occurrences) {
         brokenLinks.push({
           href: occ.href,
           file: occ.file,
           lines: [occ.line],
-          statusCode: result.statusCode,
-          errorMessage: result.error,
+          errorMessage: 'Malformed URL',
         })
       }
-
-      if (options.verbose) {
-        console.log(`  ❌ ${url} - ${result.error || `HTTP ${result.statusCode}`}`)
-      }
-    } else if (options.verbose && !result.cached) {
-      console.log(`  ✅ ${url}`)
-    }
-
-    // Progress update every 100 URLs
-    if (checkedCount % 100 === 0) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
-      const rate = (checkedCount / (Date.now() - startTime)) * 1000 * 60
-      const remaining = maxUrls - checkedCount
-      const etaMin = (remaining / rate).toFixed(0)
-      console.log(
-        `  Checked ${checkedCount}/${maxUrls} URLs (${cachedCount} cached) — ${elapsed}s elapsed, ~${etaMin}m remaining`,
-      )
-    }
-
-    // Small delay between non-cached requests to avoid rate limiting
-    if (!result.cached) {
-      await sleep(REQUEST_DELAY_MS)
     }
   }
+  const queuedUrlCount = Array.from(urlsByDomain.values()).reduce(
+    (count, domainUrls) => count + domainUrls.length,
+    0,
+  )
+  const plannedTotal = queuedUrlCount + malformedCount
+
+  console.log(
+    `Checking ${plannedTotal} URLs across ${urlsByDomain.size} domains (up to ${domainConcurrency} domains at once)...`,
+  )
+
+  // Check all URLs for one domain sequentially, respecting the per-request delay.
+  async function checkDomainUrls(domainUrls: string[]): Promise<void> {
+    for (const url of domainUrls) {
+      const occurrences = allLinks.get(url)!
+      const result = await checkUrl(url, db.data)
+      checkedCount++
+
+      if (result.cached) cachedCount++
+
+      if (!result.ok) {
+        for (const occ of occurrences) {
+          brokenLinks.push({
+            href: url,
+            file: occ.file,
+            lines: [occ.line],
+            statusCode: result.statusCode,
+            errorMessage: result.error,
+          })
+        }
+        if (options.verbose) {
+          console.log(`  ❌ ${url} - ${result.error || `HTTP ${result.statusCode}`}`)
+        }
+      } else if (options.verbose && !result.cached) {
+        console.log(`  ✅ ${url}`)
+      }
+
+      // Progress update every 100 URLs
+      if (checkedCount % 100 === 0) {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+        const rate = (checkedCount / (Date.now() - startTime)) * 1000 * 60
+        const remaining = plannedTotal - checkedCount
+        const etaMin = (remaining / rate).toFixed(0)
+        console.log(
+          `  Checked ${checkedCount}/${plannedTotal} URLs (${cachedCount} cached) — ${elapsed}s elapsed, ~${etaMin}m remaining`,
+        )
+      }
+
+      // Small delay between requests to the same domain to avoid rate limiting
+      if (!result.cached) {
+        await sleep(REQUEST_DELAY_MS)
+      }
+    }
+  }
+
+  // Distribute domains round-robin across DOMAIN_CONCURRENCY workers. Each worker
+  // processes its assigned domains sequentially, so we get parallelism across
+  // domains without hammering any single domain.
+  const domainQueues = Array.from(urlsByDomain.values())
+  const workers: string[][][] = Array.from({ length: domainConcurrency }, () => [])
+  for (let i = 0; i < domainQueues.length; i++) {
+    workers[i % domainConcurrency].push(domainQueues[i])
+  }
+
+  async function runWorker(workerDomains: string[][]): Promise<void> {
+    for (const domainUrls of workerDomains) {
+      await checkDomainUrls(domainUrls)
+    }
+  }
+
+  await Promise.all(workers.map(runWorker))
 
   // Save cache
   await db.write()
