@@ -269,4 +269,4 @@ The local configuration file uses the same schema as the repository configuratio
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-command-reference)
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-programmatic-reference)
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-plugin-reference)
-* [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-hooks-reference)
+* [AUTOTITLE](/copilot/reference/hooks-reference)

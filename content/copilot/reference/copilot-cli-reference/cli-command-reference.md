@@ -419,7 +419,7 @@ For more information, see [AUTOTITLE](/copilot/how-tos/configure-custom-instruct
 
 ## Hooks reference
 
-For detailed information about hooks—including hook configuration formats, hook events, input payloads, and decision control—see [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-hooks-reference).
+For detailed information about hooks—including hook configuration formats, hook events, input payloads, and decision control—see [AUTOTITLE](/copilot/reference/hooks-reference).
 
 ## MCP server configuration
 
@@ -886,7 +886,7 @@ When content capture is enabled, the following attributes are populated.
 ## Further reading
 
 * [AUTOTITLE](/copilot/how-tos/copilot-cli)
-* [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-hooks-reference)
+* [AUTOTITLE](/copilot/reference/hooks-reference)
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-plugin-reference)
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-programmatic-reference)
 * [AUTOTITLE](/copilot/reference/copilot-cli-reference/cli-config-dir-reference)
