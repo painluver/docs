@@ -47,7 +47,7 @@ Each {% data variables.product.prodname_copilot_short %} individual plan subscri
 
 **Base credits** are included with your plan subscription each month. These match with your subscription price and they never change.
 
-Each plan currently also includes a **flex allotment**. This in an additional monthly amount on top of your base credits. The flex allotment is a variable part of your included usage; it is designed to adapt as the economics of AI evolve, including model pricing, new models, and improvements in efficiency.
+Each plan currently also includes a **flex allotment**. This is an additional monthly amount on top of your base credits. The flex allotment is a variable part of your included usage; it is designed to adapt as the economics of AI evolve, including model pricing, new models, and improvements in efficiency.
 
 Your base credits are used first. If you go beyond your base credits, the flex allotment is applied automatically at the same rates across your IDE, {% data variables.product.prodname_dotcom_the_website %}, and the {% data variables.copilot.copilot_cli_short %}. No additional setup is required. Your usage dashboard shows your available allowance and what you've used.
 
