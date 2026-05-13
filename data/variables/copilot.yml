@@ -222,4 +222,4 @@ copilot_workspace: 'Copilot Workspace'
 copilot_workspace_short: 'Workspace'
 
 # BYOK
-copilot_byok_supported_features: '{% data variables.copilot.copilot_chat %} and {% data variables.copilot.copilot_cli %}'
+copilot_byok_supported_features: '{% data variables.copilot.copilot_chat_short %}, {% data variables.copilot.copilot_cli_short %}, and {% data variables.product.prodname_vscode_shortname %}'
