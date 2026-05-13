@@ -209,7 +209,15 @@ concurrency:
   group: changelog-agent-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
   cancel-in-progress: true
 
-engine: copilot
+engine:
+  id: copilot
+  env:
+    COPILOT_GITHUB_TOKEN: ${{ secrets.DOCS_BOT_PAT_COPILOT }}
+
+network:
+  allowed:
+    - defaults
+    - github
 
 permissions:
   contents: read

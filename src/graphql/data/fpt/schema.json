@@ -98434,7 +98434,7 @@
       "name": "RepositoryRulesetBypassActorInput",
       "id": "repositoryrulesetbypassactorinput",
       "href": "/graphql/reference/input-objects#repositoryrulesetbypassactorinput",
-      "description": "<p>Specifies the attributes for a new or updated ruleset bypass actor. Only one of\n<code>actor_id</code>, <code>repository_role_database_id</code>, <code>organization_admin</code>, or <code>deploy_key</code>\nshould be specified.</p>",
+      "description": "<p>Specifies the attributes for a new or updated ruleset bypass actor. Only one of\n<code>actor_id</code>, <code>repository_role_database_id</code>, <code>organization_admin</code>,\n<code>enterprise_owner</code>, or <code>deploy_key</code> should be specified.</p>",
       "inputFields": [
         {
           "name": "actorId",
