@@ -2,7 +2,11 @@
 
 **12 May 2026**
 
-The billing preview tool for customers to compare their current usage under PRUs against usage under usage-based billing (starting June 1) is now live. We updated the related documentation to reflect the changed scope of the tool:
+We have now published the GitHub Enterprise Server (GHES) 3.21 release candidate notes. You can read the full notes here:
+
+* [GitHub Enterprise Server 3.21.0-rc.1](https://docs.github.com/en/enterprise-server@3.21/admin/release-notes)
+
+We also updated billing preview tool for customers to compare their current usage under PRUs against usage under usage-based billing (starting June 1). We updated the related documentation to reflect the changed scope of the tool:
 
 * [Preparing for your move to usage-based billing](https://docs.github.com/en/copilot/how-tos/manage-and-track-spending/prepare-for-your-move-to-usage-based-billing)
 * [Preparing your organization for usage-based billing](https://docs.github.com/en/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing)
