@@ -1,5 +1,16 @@
 # Docs changelog
 
+**12 May 2026**
+
+The billing preview tool for customers to compare their current usage under PRUs against usage under usage-based billing (starting June 1) is now live. We updated the related documentation to reflect the changed scope of the tool:
+
+* [Preparing for your move to usage-based billing](https://docs.github.com/en/copilot/how-tos/manage-and-track-spending/prepare-for-your-move-to-usage-based-billing)
+* [Preparing your organization for usage-based billing](https://docs.github.com/en/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing)
+* [Usage-based billing for individuals](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals)
+* [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
+
+<hr>
+
 **7 May 2026**
 
 Enterprise administrators can now centrally manage plugin standards for Copilot CLI. We added two new articles:
