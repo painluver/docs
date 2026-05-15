@@ -78,6 +78,16 @@ export function correctTranslatedContentStrings(
   // measured across all eight translated languages.
   content = joinDanglingMarkers(content)
 
+  // YAML `|2-` block-scalar artifacts: some translated frontmatter fields
+  // (typically `intro`) arrive with a spurious leading newline followed by
+  // deep indentation when the translator wrote `field: |2-\n\n    content`.
+  // The YAML parser preserves the leading blank line and extra indentation
+  // in the parsed string. Strip that leading whitespace when the English
+  // source has no such prefix.
+  if (content.startsWith('\n') && !englishContent.startsWith('\n')) {
+    content = content.replace(/^\n[ \t]*/, '')
+  }
+
   // --- Per-language fixes (es, ja, pt, zh, ru, fr, ko, de) ---
 
   if (context.code === 'es') {
@@ -2173,17 +2183,35 @@ function joinDanglingMarkers(content: string): string {
     }
     const nextContent = nextDeep[1]
 
+    // Consume additional deeply-indented continuation lines so multi-line
+    // wrapped headings/blockquotes/bold-opens collapse onto one line
+    // (e.g. `##\n      {%if%}\n      content`). Returns the concatenated
+    // continuation text and the new line index.
+    const consumeContinuations = (start: number): { extra: string; nextI: number } => {
+      let extra = ''
+      let j = start
+      while (j + 1 < lines.length) {
+        const cont = lines[j + 1].match(deepIndented)
+        if (!cont) break
+        extra += cont[1]
+        j++
+      }
+      return { extra, nextI: j }
+    }
+
     const heading = line.match(headingOnly)
     if (heading) {
-      out.push(`${heading[1]}${heading[2]} ${nextContent}`)
-      i++
+      const { extra, nextI } = consumeContinuations(i + 1)
+      out.push(`${heading[1]}${heading[2]} ${nextContent}${extra}`)
+      i = nextI
       continue
     }
 
     const bq = line.match(blockquoteOnly)
     if (bq) {
-      out.push(`${bq[1]} ${nextContent}`)
-      i++
+      const { extra, nextI } = consumeContinuations(i + 1)
+      out.push(`${bq[1]} ${nextContent}${extra}`)
+      i = nextI
       continue
     }
 
@@ -2196,8 +2224,9 @@ function joinDanglingMarkers(content: string): string {
 
     const boldOpen = line.match(markerThenBoldOnly)
     if (boldOpen) {
-      out.push(`${boldOpen[1]}**${nextContent}`)
-      i++
+      const { extra, nextI } = consumeContinuations(i + 1)
+      out.push(`${boldOpen[1]}**${nextContent}${extra}`)
+      i = nextI
       continue
     }
 
